@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Badminton Randomizer - Mobile Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pastel-green-50: #f0fdf4;
+            --pastel-green-100: #dcfce7;
+            --pastel-green-200: #bbf7d0;
+            --pastel-green-500: #22c55e;
+            --pastel-green-600: #16a34a;
+        }
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8fafc;
+            background-image: radial-gradient(at 0% 0%, rgba(187, 247, 208, 0.2) 0, transparent 50%), 
+                              radial-gradient(at 100% 100%, rgba(134, 239, 172, 0.1) 0, transparent 50%);
+            overscroll-behavior-y: contain; /* ป้องกันการดึงหน้าจอเพื่อรีเฟรชบนมือถือบางรุ่นถ้าไม่จำเป็น */
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 1.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.04);
+        }
+        .active-tab {
+            background-color: var(--pastel-green-500);
+            color: white !important;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.25);
+        }
+        /* ปรับความสูงรายการให้พอดีกับหน้าจอมือถือ */
+        .list-container {
+            background-color: #f1f5f9;
+            padding: 12px;
+            border-radius: 1rem;
+            height: calc(100vh - 380px); /* ยืดหยุ่นตามความสูงหน้าจอ */
+            min-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+        }
+        .player-item {
+            background: white;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .badge-gender {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .gender-m { background-color: #dcfce7; color: #15803d; }
+        .gender-f { background-color: #fdf2f8; color: #db2777; }
+        
+        .btn-primary {
+            background-color: var(--pastel-green-500);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+            touch-action: manipulation;
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+        
+        /* Custom Scrollbar for Mobile */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .page-content {
+            padding-bottom: 20px;
+        }
+
+        /* ปรับระดับ Level Badge */
+        .lvl-tag {
+            font-size: 9px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Mobile Header -->
+    <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3">
+        <div class="flex items-center justify-between max-w-md mx-auto">
+            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <span class="text-green-500 text-2xl">🏸</span> Badminton
+            </h1>
+            <div id="quick-count" class="text-[10px] font-bold bg-slate-100 text-slate-500 px-3 py-1 rounded-full uppercase">
+                Active: <span id="header-active-count">0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 pt-4 pb-24">
+        
+        <!-- Navigation Tabs (Bottom Sticky on Mobile) -->
+        <nav class="fixed bottom-6 left-4 right-4 z-40 bg-slate-900/90 backdrop-blur-lg rounded-2xl p-1.5 shadow-2xl border border-white/10 flex gap-1">
+            <button onclick="switchPage('home')" id="tab-home" class="flex-1 py-3 rounded-xl transition-all text-white/50 text-sm font-medium active-tab">
+                ตั้งค่า
+            </button>
+            <button onclick="switchPage('players')" id="tab-players" class="flex-1 py-3 rounded-xl transition-all text-white/50 text-sm font-medium">
+                รายชื่อ
+            </button>
+            <button onclick="switchPage('result')" id="tab-result" class="flex-1 py-3 rounded-xl transition-all text-white/50 text-sm font-medium">
+                ผลสุ่ม
+            </button>
+        </nav>
+
+        <!-- Page 1: Settings -->
+        <div id="page-home" class="page-content animate-in fade-in duration-300">
+            <div class="glass-card p-6 space-y-6">
+                <div class="space-y-4">
+                    <div class="group">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">โหมดการเล่น</label>
+                        <select id="game-mode" class="w-full p-4 rounded-xl border-slate-200 border bg-white outline-none focus:ring-2 focus:ring-green-400 transition-all text-slate-700 font-medium">
+                            <option value="4" selected>เล่นทีม (4 คน)</option>
+                            <option value="2">เล่นคู่ (2 คน)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">ระดับฝีมือ</label>
+                        <select id="level-filter" class="w-full p-4 rounded-xl border-slate-200 border bg-white outline-none focus:ring-2 focus:ring-green-400 transition-all text-slate-700 font-medium">
+                            <option value="balanced">สมดุล (Balanced)</option>
+                            <option value="0">Beginner เท่านั้น</option>
+                            <option value="1">Elementary เท่านั้น</option>
+                            <option value="2">Intermediate เท่านั้น</option>
+                            <option value="3">Advanced เท่านั้น</option>
+                            <option value="4">Expert เท่านั้น</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">ประเภทแมตช์</label>
+                        <select id="match-type" class="w-full p-4 rounded-xl border-slate-200 border bg-white outline-none focus:ring-2 focus:ring-green-400 transition-all text-slate-700 font-medium">
+                            <option value="any">ทั่วไป (Open)</option>
+                            <option value="men">ชายล้วน (Men)</option>
+                            <option value="women">หญิงล้วน (Women)</option>
+                            <option value="mixed">คู่ผสม (Mixed)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="pt-4">
+                    <button onclick="processGenerateAll()" class="w-full btn-primary text-white py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-3">
+                        <span>เริ่มจับทีม</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M11.3 1.047a1 1 0 01.897.95V4.25h2.556a2.127 2.127 0 012.127 2.128v7.144a2.127 2.127 0 01-2.127 2.127H5.247a2.127 2.127 0 01-2.127-2.127V6.378a2.127 2.127 0 012.127-2.127h2.556V1.997a1 1 0 01.897-.95h2.6zm-1.05 3.203h-1.5V10.25h1.5V4.25z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 2: Players Management -->
+        <div id="page-players" class="page-content hidden animate-in fade-in duration-300">
+            <!-- Add Player Small Form -->
+            <div class="glass-card p-4 mb-4">
+                <div class="flex gap-2">
+                    <input type="text" id="p-name" placeholder="ชื่อผู้เล่น" class="flex-1 p-3 border-slate-200 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-400">
+                    <select id="p-gender" class="w-20 p-3 border-slate-200 border rounded-xl text-sm bg-white">
+                        <option value="M">ชาย</option>
+                        <option value="F">หญิง</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <select id="p-level" class="flex-1 p-3 border-slate-200 border rounded-xl text-xs bg-white">
+                        <option value="0">Beginner</option>
+                        <option value="1">Elementary</option>
+                        <option value="2">Intermediate</option>
+                        <option value="3" selected>Advanced</option>
+                        <option value="4">Expert</option>
+                    </select>
+                    <button onclick="addPlayer()" class="bg-slate-800 text-white px-6 py-3 rounded-xl text-xs font-bold">เพิ่ม</button>
+                </div>
+            </div>
+
+            <!-- Tabs for Lists -->
+            <div class="flex mb-3 gap-2">
+                <button id="btn-show-all" onclick="toggleListView('all')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-green-100 text-green-700 border border-green-200">ทั้งหมด</button>
+                <button id="btn-show-active" onclick="toggleListView('active')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border border-slate-200">คัดกรองวันนี้</button>
+            </div>
+
+            <div id="view-all" class="space-y-2">
+                <div class="list-container" id="all-players-container"></div>
+            </div>
+            
+            <div id="view-active" class="space-y-2 hidden">
+                <div class="list-container" id="active-players-container" style="background-color: #ecfdf5; border-color: #dcfce7;"></div>
+            </div>
+        </div>
+
+        <!-- Page 3: Result -->
+        <div id="page-result" class="page-content hidden animate-in fade-in duration-300">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-bold text-slate-800 text-lg">🔥 ผลการจับคู่</h2>
+                <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-black uppercase" id="match-count-badge">0 สนาม</span>
+            </div>
+            
+            <div id="result-container" class="space-y-4">
+                <!-- Result Cards -->
+            </div>
+
+            <div id="waiting-section" class="mt-6 p-4 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 hidden">
+                <p class="text-[10px] font-bold text-slate-400 uppercase text-center mb-3 tracking-widest">ผู้เล่นที่เหลือ (รอสลับ)</p>
+                <div id="waiting-list" class="flex flex-wrap gap-2 justify-center"></div>
+            </div>
+
+            <div class="mt-8 space-y-3">
+                <button onclick="processGenerateAll()" class="w-full btn-primary text-white py-4 rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>สุ่มใหม่อีกครั้ง</span>
+                </button>
+                <button onclick="clearHistory()" class="w-full bg-white border border-slate-200 text-slate-400 py-3 rounded-xl text-[11px] font-bold uppercase tracking-wider">
+                    ล้างประวัติคู่เดิม
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Alert Modal (Mobile Friendly) -->
+    <div id="alert-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-[100] p-8">
+        <div class="bg-white rounded-[2rem] p-8 w-full max-w-xs text-center shadow-2xl scale-in-center">
+            <div class="text-4xl mb-4">⚠️</div>
+            <p id="alert-msg" class="text-slate-700 font-semibold mb-6 leading-relaxed"></p>
+            <button onclick="closeAlert()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold">รับทราบ</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA & STATE ---
+        const levels = { 0: "Beginner", 1: "Elementary", 2: "Intermediate", 3: "Advanced", 4: "Expert" };
+        const defaultPlayers = [
+            { id: 101, name: "โหล", level: 2, gender: "M" },
+            { id: 102, name: "จอร์จ", level: 2, gender: "M" },
+            { id: 103, name: "มังกร", level: 2, gender: "M" },
+            { id: 104, name: "กัปตัน", level: 3, gender: "M" },
+            { id: 105, name: "ปกป้อง", level: 3, gender: "M" },
+            { id: 106, name: "นิก", level: 1, gender: "M" },
+            { id: 107, name: "ก้อง", level: 2, gender: "M" },
+            { id: 108, name: "เติ้ล", level: 3, gender: "M" },
+            { id: 109, name: "อลิส", level: 4, gender: "M" },
+            { id: 110, name: "เบนซ์", level: 3, gender: "M" },
+            { id: 111, name: "แทน", level: 2, gender: "M" },
+            { id: 112, name: "จอน", level: 3, gender: "M" }, 
+            { id: 113, name: "เบ๊บ", level: 3, gender: "M" }, 
+            { id: 114, name: "หลิน", level: 2, gender: "M" },
+            { id: 115, name: "พี่อาทิตย์", level: 0, gender: "M" }, 
+            { id: 116, name: "เอิน", level: 2, gender: "F" },
+            { id: 117, name: "ฟาง", level: 2, gender: "F" }, 
+            { id: 118, name: "หงส์ฟ้า", level: 1, gender: "F" },
+            { id: 119, name: "ฟิล์ม", level: 1, gender: "F" }, 
+            { id: 120, name: "พอย", level: 1, gender: "F" },
+            { id: 121, name: "มิ้น", level: 0, gender: "F" } 
+            
+        ];
+
+        let allPlayers = JSON.parse(localStorage.getItem('bd_all_pool_v7')) || defaultPlayers;
+        let activePlayers = JSON.parse(localStorage.getItem('bd_active_v7')) || [];
+        let historyPairs = JSON.parse(localStorage.getItem('bd_history_v7')) || [];
+
+        // --- CORE FUNCTIONS ---
+        function save() {
+            localStorage.setItem('bd_all_pool_v7', JSON.stringify(allPlayers));
+            localStorage.setItem('bd_active_v7', JSON.stringify(activePlayers));
+            localStorage.setItem('bd_history_v7', JSON.stringify(historyPairs));
+            renderLists();
+        }
+
+        function switchPage(page) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${page}`).classList.remove('hidden');
+            ['home', 'players', 'result'].forEach(tab => {
+                const btn = document.getElementById(`tab-${tab}`);
+                if (tab === page) btn.classList.add('active-tab');
+                else btn.classList.remove('active-tab');
+            });
+            window.scrollTo(0,0);
+        }
+
+        function toggleListView(view) {
+            const all = document.getElementById('view-all');
+            const active = document.getElementById('view-active');
+            const btnAll = document.getElementById('btn-show-all');
+            const btnActive = document.getElementById('btn-show-active');
+
+            if (view === 'all') {
+                all.classList.remove('hidden');
+                active.classList.add('hidden');
+                btnAll.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-green-100 text-green-700 border border-green-200";
+                btnActive.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border border-slate-200";
+            } else {
+                all.classList.add('hidden');
+                active.classList.remove('hidden');
+                btnActive.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-green-500 text-white shadow-sm";
+                btnAll.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border border-slate-200";
+            }
+        }
+
+        function addPlayer() {
+            const name = document.getElementById('p-name').value.trim();
+            const level = parseInt(document.getElementById('p-level').value);
+            const gender = document.getElementById('p-gender').value;
+            if (!name) return showAlert("กรุณาใส่ชื่อ");
+            allPlayers.unshift({ id: Date.now(), name, level, gender });
+            document.getElementById('p-name').value = '';
+            save();
+        }
+
+        function moveToActive(id) {
+            const p = allPlayers.find(x => x.id === id);
+            if (p && !activePlayers.some(x => x.id === id)) {
+                activePlayers.push(p);
+                save();
+            }
+        }
+
+        function removeFromActive(id) {
+            activePlayers = activePlayers.filter(x => x.id !== id);
+            save();
+        }
+
+        function deletePlayer(id) {
+            allPlayers = allPlayers.filter(x => x.id !== id);
+            activePlayers = activePlayers.filter(x => x.id !== id);
+            save();
+        }
+
+        function renderLists() {
+            document.getElementById('header-active-count').innerText = activePlayers.length;
+            
+            const allContainer = document.getElementById('all-players-container');
+            allContainer.innerHTML = allPlayers.map(p => `
+                <div class="player-item">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="badge-gender ${p.gender === 'M' ? 'gender-m' : 'gender-f'} shrink-0">
+                            ${p.gender === 'M' ? '♂' : '♀'}
+                        </div>
+                        <div class="truncate">
+                            <div class="font-bold text-slate-700 text-sm truncate">${p.name}</div>
+                            <div class="lvl-tag bg-slate-100 text-slate-400 mt-0.5 inline-block">${levels[p.level]}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="deletePlayer(${p.id})" class="p-2 text-slate-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                        <button onclick="moveToActive(${p.id})" class="bg-green-500 text-white p-2 rounded-lg ${activePlayers.some(x=>x.id===p.id) ? 'opacity-30' : ''}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            const activeContainer = document.getElementById('active-players-container');
+            activeContainer.innerHTML = activePlayers.length ? activePlayers.map(p => `
+                <div class="player-item border-l-4 border-green-500">
+                    <div class="flex items-center gap-3">
+                        <div class="badge-gender ${p.gender === 'M' ? 'gender-m' : 'gender-f'} shrink-0">${p.gender === 'M' ? '♂' : '♀'}</div>
+                        <div class="font-bold text-slate-700 text-sm">${p.name}</div>
+                    </div>
+                    <button onclick="removeFromActive(${p.id})" class="p-2 text-red-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            `).join('') : '<div class="text-center py-10 text-slate-400 text-xs uppercase tracking-widest">ยังไม่มีผู้เข้าร่วม</div>';
+        }
+
+        // --- RANDOMIZER LOGIC ---
+        function processGenerateAll() {
+            const mode = parseInt(document.getElementById('game-mode').value);
+            const levelFilter = document.getElementById('level-filter').value;
+            const matchType = document.getElementById('match-type').value;
+
+            let pool = [...activePlayers];
+            if (levelFilter !== 'balanced') pool = pool.filter(p => p.level === parseInt(levelFilter));
+            if (matchType === 'men') pool = pool.filter(p => p.gender === 'M');
+            else if (matchType === 'women') pool = pool.filter(p => p.gender === 'F');
+
+            if (pool.length < mode) return showAlert(`ผู้เล่นไม่พอ (มี ${pool.length} จาก ${mode})`);
+
+            pool = pool.sort(() => 0.5 - Math.random());
+            const courts = [];
+            let tempPool = [...pool];
+
+            while (tempPool.length >= mode) {
+                let selected = [];
+                if (matchType === 'mixed' && mode === 4) {
+                    const m = tempPool.filter(p => p.gender === 'M').slice(0, 2);
+                    const f = tempPool.filter(p => p.gender === 'F').slice(0, 2);
+                    if (m.length === 2 && f.length === 2) {
+                        selected = [...m, ...f];
+                        tempPool = tempPool.filter(x => !selected.map(s => s.id).includes(x.id));
+                    } else break;
+                } else {
+                    selected = tempPool.splice(0, mode);
+                }
+
+                if (selected.length === mode) {
+                    const res = splitToTeams(selected, mode, matchType, levelFilter === 'balanced');
+                    courts.push(res);
+                }
+            }
+            renderResults(courts, tempPool);
+            switchPage('result');
+        }
+
+        function splitToTeams(pool, mode, matchType, isBalanced) {
+            if (mode === 2) return { teamA: [pool[0]], teamB: [pool[1]] };
+            const p = pool;
+            const combs = [
+                { a: [p[0], p[1]], b: [p[2], p[3]] },
+                { a: [p[0], p[2]], b: [p[1], p[3]] },
+                { a: [p[0], p[3]], b: [p[1], p[2]] }
+            ];
+            combs.forEach(s => {
+                const diff = Math.abs((s.a[0].level + s.a[1].level) - (s.b[0].level + s.b[1].level));
+                const historyMatch = isHistory(s.a[0], s.a[1]) || isHistory(s.b[0], s.b[1]);
+                s.score = (historyMatch ? 50 : 0) + (isBalanced ? diff : Math.random());
+            });
+            combs.sort((x,y) => x.score - y.score);
+            const win = combs[0];
+            record(win.a); record(win.b);
+            return { teamA: win.a, teamB: win.b };
+        }
+
+        function isHistory(p1, p2) { return historyPairs.includes([p1.id, p2.id].sort().join(':')); }
+        function record(t) { 
+            if(t.length < 2) return;
+            const key = t.map(x=>x.id).sort().join(':');
+            if(!historyPairs.includes(key)) historyPairs.push(key);
+            if(historyPairs.length > 100) historyPairs.shift();
+        }
+
+        function renderResults(courts, waiting) {
+            const container = document.getElementById('result-container');
+            document.getElementById('match-count-badge').innerText = `${courts.length} สนาม`;
+            container.innerHTML = courts.map((c, i) => `
+                <div class="glass-card p-4 relative overflow-hidden">
+                    <div class="absolute -top-2 -right-1 text-4xl font-black text-slate-100">${i+1}</div>
+                    <div class="space-y-3 relative z-10">
+                        ${renderTeam('A', c.teamA, 'emerald')}
+                        <div class="flex items-center gap-2 px-10">
+                            <div class="h-px bg-slate-100 flex-1"></div>
+                            <span class="text-[8px] font-black text-slate-300">VS</span>
+                            <div class="h-px bg-slate-100 flex-1"></div>
+                        </div>
+                        ${renderTeam('B', c.teamB, 'rose')}
+                    </div>
+                </div>
+            `).join('');
+
+            const wBox = document.getElementById('waiting-section');
+            if (waiting.length) {
+                wBox.classList.remove('hidden');
+                document.getElementById('waiting-list').innerHTML = waiting.map(p => `
+                    <div class="bg-white px-3 py-1.5 rounded-lg shadow-sm text-[11px] font-bold text-slate-600 border border-slate-200">
+                        ${p.name}
+                    </div>
+                `).join('');
+            } else wBox.classList.add('hidden');
+        }
+
+        function renderTeam(label, players, color) {
+            return `
+                <div class="bg-slate-50/50 rounded-xl p-3 border border-white">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[9px] font-black text-slate-400">TEAM ${label}</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        ${players.map(p => `
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-slate-700 text-sm">${p.name}</span>
+                                <span class="text-[8px] text-slate-400 font-bold uppercase">${levels[p.level]}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function showAlert(m) { 
+            document.getElementById('alert-msg').innerText = m;
+            document.getElementById('alert-modal').classList.remove('hidden');
+        }
+        function closeAlert() { document.getElementById('alert-modal').classList.add('hidden'); }
+        function clearHistory() { historyPairs = []; save(); showAlert("ล้างประวัติแล้ว"); }
+
+        // Init
+        renderLists();
+    </script>
+</body>
+</html>
