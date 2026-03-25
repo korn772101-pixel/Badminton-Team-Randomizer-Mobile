@@ -222,7 +222,7 @@
 <script>
     const levels = { 0: "Beginner", 1: "Elementary", 2: "Intermediate", 3: "Advanced", 4: "Expert" };
     let allPlayers = JSON.parse(localStorage.getItem('bd_all_pool_v7')) || [
-           { id: 101, name: "โหล", level: 2, gender: "M" },
+        { id: 101, name: "โหล", level: 2, gender: "M" },
             { id: 102, name: "จอร์จ", level: 2, gender: "M" },
             { id: 103, name: "มังกร", level: 2, gender: "M" },
             { id: 104, name: "กัปตัน", level: 3, gender: "M" },
@@ -236,13 +236,14 @@
             { id: 112, name: "จอน", level: 3, gender: "M" }, 
             { id: 113, name: "เบ๊บ", level: 3, gender: "M" }, 
             { id: 114, name: "หลิน", level: 2, gender: "M" },
-            { id: 115, name: "มด", level: 2, gender: "F" },
-            { id: 116, name: "เอิน", level: 2, gender: "F" },
-            { id: 117, name: "ฟาง", level: 2, gender: "F" }, 
-            { id: 118, name: "หงส์ฟ้า", level: 1, gender: "F" },
-            { id: 119, name: "ฟิล์ม", level: 1, gender: "F" }, 
-            { id: 120, name: "พอย", level: 1, gender: "F" },
-            { id: 121, name: "มิ้น", level: 0, gender: "F" } 
+            { id: 115, name: "พี่อาทิตย์", level: 0, gender: "M" }, 
+            { id: 116, name: "มด", level: 2, gender: "F" }, 
+            { id: 117, name: "เอิน", level: 2, gender: "F" },
+            { id: 118, name: "ฟาง", level: 2, gender: "F" }, 
+            { id: 119, name: "หงส์ฟ้า", level: 1, gender: "F" },
+            { id: 120, name: "ฟิล์ม", level: 1, gender: "F" }, 
+            { id: 121, name: "พอย", level: 1, gender: "F" },
+            { id: 122, name: "มิ้น", level: 0, gender: "F" } 
     ];
     let activePlayers = JSON.parse(localStorage.getItem('bd_active_v7')) || [];
     let historyPairs = JSON.parse(localStorage.getItem('bd_history_v7')) || [];
