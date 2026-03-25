@@ -8,11 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --pastel-green-50: #f0fdf4;
-            --pastel-green-100: #dcfce7;
-            --pastel-green-200: #bbf7d0;
             --pastel-green-500: #22c55e;
-            --pastel-green-600: #16a34a;
             --primary-blue: #0070c9;
         }
         body {
@@ -54,32 +50,22 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         .badge-gender {
-            width: 28px;
-            height: 28px;
+            width: 28px; height: 28px;
             border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             font-size: 12px;
         }
         .gender-m { background-color: #dcfce7; color: #15803d; }
         .gender-f { background-color: #fdf2f8; color: #db2777; }
-        
-        .btn-action {
-            transition: all 0.2s;
-            touch-action: manipulation;
-        }
-        .btn-action:active {
-            transform: scale(0.95);
-            opacity: 0.9;
-        }
+        .btn-action { transition: all 0.2s; touch-action: manipulation; }
+        .btn-action:active { transform: scale(0.95); opacity: 0.9; }
         .lvl-tag {
-            font-size: 9px;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
+            font-size: 9px; padding: 1px 6px;
+            border-radius: 4px; font-weight: 600; text-transform: uppercase;
         }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -89,7 +75,7 @@
         <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
             <span class="text-green-500 text-2xl">🏸</span> Badminton
         </h1>
-        <div id="quick-count" class="text-[10px] font-bold bg-slate-100 text-slate-500 px-3 py-1 rounded-full uppercase">
+        <div class="text-[10px] font-bold bg-slate-100 text-slate-500 px-3 py-1 rounded-full uppercase">
             Active: <span id="header-active-count">0</span>
         </div>
     </div>
@@ -170,8 +156,9 @@
             <button id="btn-show-active" onclick="toggleListView('active')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border border-slate-200">คัดกรองวันนี้</button>
         </div>
 
-        <div id="view-all" class="list-container" id="all-players-container"></div>
-        <div id="view-active" class="list-container hidden" id="active-players-container" style="background-color: #ecfdf5; border-color: #dcfce7;"></div>
+        <!-- FIX: แยก id ออกจาก class — ใช้ id ที่ถูกต้องให้ renderLists() หาเจอ -->
+        <div id="all-players-container" class="list-container"></div>
+        <div id="active-players-container" class="list-container hidden" style="background-color: #ecfdf5; border-color: #dcfce7;"></div>
     </div>
 
     <!-- Page 3: Result -->
@@ -180,16 +167,14 @@
             <h2 class="font-bold text-slate-800 text-lg">🔥 ผลการจับคู่</h2>
             <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-black uppercase" id="match-count-badge">0 สนาม</span>
         </div>
-        
+
         <div id="result-container" class="space-y-4"></div>
 
-        <!-- Waiting List Section -->
         <div id="waiting-section" class="mt-6 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 hidden">
             <p class="text-[10px] font-bold text-slate-400 uppercase text-center mb-3 tracking-widest">ผู้เล่นที่เหลือ (รอสลับ)</p>
             <div id="waiting-list" class="flex flex-wrap gap-2 justify-center"></div>
         </div>
 
-        <!-- Control Buttons (Updated to match image) -->
         <div class="mt-8">
             <div class="flex bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-100">
                 <button onclick="processGenerateAll(false)" class="flex-1 bg-[#22c55e] text-white py-5 px-2 font-bold text-sm flex items-center justify-center gap-2 btn-action border-r border-white/20">
@@ -202,7 +187,6 @@
                     <span>สุ่มจากผู้เล่นที่เหลือ</span>
                 </button>
             </div>
-            
             <button onclick="clearHistory()" class="w-full mt-4 text-slate-400 py-2 text-[10px] font-bold uppercase tracking-widest">
                 ล้างประวัติคู่เดิม
             </button>
@@ -211,7 +195,7 @@
 </main>
 
 <!-- Alert Modal -->
-<div id="alert-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-[100] p-8">
+<div id="alert-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm items-center justify-center z-[100] p-8" style="display:none;">
     <div class="bg-white rounded-[2rem] p-8 w-full max-w-xs text-center shadow-2xl">
         <div class="text-4xl mb-4">⚠️</div>
         <p id="alert-msg" class="text-slate-700 font-semibold mb-6 leading-relaxed"></p>
@@ -221,38 +205,42 @@
 
 <script>
     const levels = { 0: "Beginner", 1: "Elementary", 2: "Intermediate", 3: "Advanced", 4: "Expert" };
-    let allPlayers = JSON.parse(localStorage.getItem('bd_all_pool_v7')) || [
-        { id: 101, name: "โหล", level: 2, gender: "M" },
-            { id: 102, name: "จอร์จ", level: 2, gender: "M" },
-            { id: 103, name: "มังกร", level: 2, gender: "M" },
-            { id: 104, name: "กัปตัน", level: 3, gender: "M" },
-            { id: 105, name: "ปกป้อง", level: 3, gender: "M" },
-            { id: 106, name: "นิก", level: 1, gender: "M" },
-            { id: 107, name: "ก้อง", level: 2, gender: "M" },
-            { id: 108, name: "เติ้ล", level: 3, gender: "M" },
-            { id: 109, name: "อลิส", level: 4, gender: "M" },
-            { id: 110, name: "เบนซ์", level: 3, gender: "M" },
-            { id: 111, name: "แทน", level: 2, gender: "M" },
-            { id: 112, name: "จอน", level: 3, gender: "M" }, 
-            { id: 113, name: "เบ๊บ", level: 3, gender: "M" }, 
-            { id: 114, name: "หลิน", level: 2, gender: "M" },
-            { id: 115, name: "พี่อาทิตย์", level: 0, gender: "M" }, 
-            { id: 116, name: "มด", level: 2, gender: "F" }, 
-            { id: 117, name: "เอิน", level: 2, gender: "F" },
-            { id: 118, name: "ฟาง", level: 2, gender: "F" }, 
-            { id: 119, name: "หงส์ฟ้า", level: 1, gender: "F" },
-            { id: 120, name: "ฟิล์ม", level: 1, gender: "F" }, 
-            { id: 121, name: "พอย", level: 1, gender: "F" },
-            { id: 122, name: "มิ้น", level: 0, gender: "F" } 
+
+    const defaultPlayers = [
+        { id: 101, name: "โหล",        level: 2, gender: "M" },
+        { id: 102, name: "จอร์จ",      level: 2, gender: "M" },
+        { id: 103, name: "มังกร",      level: 2, gender: "M" },
+        { id: 104, name: "กัปตัน",     level: 3, gender: "M" },
+        { id: 105, name: "ปกป้อง",     level: 3, gender: "M" },
+        { id: 106, name: "นิก",        level: 1, gender: "M" },
+        { id: 107, name: "ก้อง",       level: 2, gender: "M" },
+        { id: 108, name: "เติ้ล",      level: 3, gender: "M" },
+        { id: 109, name: "อลิส",       level: 4, gender: "M" },
+        { id: 110, name: "เบนซ์",      level: 3, gender: "M" },
+        { id: 111, name: "แทน",        level: 2, gender: "M" },
+        { id: 112, name: "จอน",        level: 3, gender: "M" },
+        { id: 113, name: "เบ๊บ",       level: 3, gender: "M" },
+        { id: 114, name: "หลิน",       level: 2, gender: "M" },
+        { id: 115, name: "พี่อาทิตย์", level: 0, gender: "M" },
+        { id: 116, name: "มด",         level: 2, gender: "F" },
+        { id: 117, name: "เอิน",       level: 2, gender: "F" },
+        { id: 118, name: "ฟาง",        level: 2, gender: "F" },
+        { id: 119, name: "หงส์ฟ้า",    level: 1, gender: "F" },
+        { id: 120, name: "ฟิล์ม",      level: 1, gender: "F" },
+        { id: 121, name: "พอย",        level: 1, gender: "F" },
+        { id: 122, name: "มิ้น",       level: 0, gender: "F" }
     ];
-    let activePlayers = JSON.parse(localStorage.getItem('bd_active_v7')) || [];
-    let historyPairs = JSON.parse(localStorage.getItem('bd_history_v7')) || [];
-    let lastWaitingList = []; // เก็บรายชื่อผู้เล่นที่เหลือจากการสุ่มครั้งก่อน
+
+    // เปลี่ยนเป็น _v8 เพื่อ reset localStorage เก่าและโหลด defaultPlayers ใหม่ทั้งหมด
+    let allPlayers    = JSON.parse(localStorage.getItem('bd_all_pool_v8')) || defaultPlayers;
+    let activePlayers = JSON.parse(localStorage.getItem('bd_active_v8'))   || [];
+    let historyPairs  = JSON.parse(localStorage.getItem('bd_history_v8'))  || [];
+    let lastWaitingList = [];
 
     function save() {
-        localStorage.setItem('bd_all_pool_v7', JSON.stringify(allPlayers));
-        localStorage.setItem('bd_active_v7', JSON.stringify(activePlayers));
-        localStorage.setItem('bd_history_v7', JSON.stringify(historyPairs));
+        localStorage.setItem('bd_all_pool_v8', JSON.stringify(allPlayers));
+        localStorage.setItem('bd_active_v8',   JSON.stringify(activePlayers));
+        localStorage.setItem('bd_history_v8',  JSON.stringify(historyPairs));
         renderLists();
     }
 
@@ -264,28 +252,30 @@
             if (tab === page) btn.classList.add('active-tab');
             else btn.classList.remove('active-tab');
         });
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
     }
 
     function toggleListView(view) {
-        const all = document.getElementById('view-all');
-        const active = document.getElementById('view-active');
-        const btnAll = document.getElementById('btn-show-all');
+        const allC    = document.getElementById('all-players-container');
+        const activeC = document.getElementById('active-players-container');
+        const btnAll    = document.getElementById('btn-show-all');
         const btnActive = document.getElementById('btn-show-active');
         if (view === 'all') {
-            all.classList.remove('hidden'); active.classList.add('hidden');
-            btnAll.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-green-100 text-green-700 border border-green-200";
+            allC.classList.remove('hidden');
+            activeC.classList.add('hidden');
+            btnAll.className    = "flex-1 py-2 text-xs font-bold rounded-lg bg-green-100 text-green-700 border border-green-200";
             btnActive.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border border-slate-200";
         } else {
-            all.classList.add('hidden'); active.classList.remove('hidden');
+            allC.classList.add('hidden');
+            activeC.classList.remove('hidden');
             btnActive.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-green-500 text-white shadow-sm";
-            btnAll.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border border-slate-200";
+            btnAll.className    = "flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border border-slate-200";
         }
     }
 
     function addPlayer() {
-        const name = document.getElementById('p-name').value.trim();
-        const level = parseInt(document.getElementById('p-level').value);
+        const name   = document.getElementById('p-name').value.trim();
+        const level  = parseInt(document.getElementById('p-level').value);
         const gender = document.getElementById('p-gender').value;
         if (!name) return showAlert("กรุณาใส่ชื่อ");
         allPlayers.unshift({ id: Date.now(), name, level, gender });
@@ -298,16 +288,22 @@
         if (p && !activePlayers.some(x => x.id === id)) { activePlayers.push(p); save(); }
     }
 
-    function removeFromActive(id) { activePlayers = activePlayers.filter(x => x.id !== id); save(); }
+    function removeFromActive(id) {
+        activePlayers = activePlayers.filter(x => x.id !== id);
+        save();
+    }
+
     function deletePlayer(id) {
-        allPlayers = allPlayers.filter(x => x.id !== id);
+        allPlayers    = allPlayers.filter(x => x.id !== id);
         activePlayers = activePlayers.filter(x => x.id !== id);
         save();
     }
 
     function renderLists() {
         document.getElementById('header-active-count').innerText = activePlayers.length;
-        const allContainer = document.getElementById('view-all');
+
+        // All players list
+        const allContainer = document.getElementById('all-players-container');
         allContainer.innerHTML = allPlayers.map(p => `
             <div class="player-item">
                 <div class="flex items-center gap-3 min-w-0">
@@ -318,48 +314,50 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button onclick="deletePlayer(${p.id})" class="p-2 text-slate-300"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                    <button onclick="moveToActive(${p.id})" class="bg-green-500 text-white p-2 rounded-lg ${activePlayers.some(x=>x.id===p.id) ? 'opacity-30' : ''}">
+                    <button onclick="deletePlayer(${p.id})" class="p-2 text-slate-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                    <button onclick="moveToActive(${p.id})" class="bg-green-500 text-white p-2 rounded-lg ${activePlayers.some(x => x.id === p.id) ? 'opacity-30 pointer-events-none' : ''}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" /></svg>
                     </button>
                 </div>
             </div>
         `).join('');
 
-        const activeContainer = document.getElementById('view-active');
-        activeContainer.innerHTML = activePlayers.length ? activePlayers.map(p => `
-            <div class="player-item border-l-4 border-green-500">
-                <div class="flex items-center gap-3">
-                    <div class="badge-gender ${p.gender === 'M' ? 'gender-m' : 'gender-f'} shrink-0">${p.gender === 'M' ? '♂' : '♀'}</div>
-                    <div class="font-bold text-slate-700 text-sm">${p.name}</div>
+        // Active players list
+        const activeContainer = document.getElementById('active-players-container');
+        activeContainer.innerHTML = activePlayers.length
+            ? activePlayers.map(p => `
+                <div class="player-item border-l-4 border-green-500">
+                    <div class="flex items-center gap-3">
+                        <div class="badge-gender ${p.gender === 'M' ? 'gender-m' : 'gender-f'} shrink-0">${p.gender === 'M' ? '♂' : '♀'}</div>
+                        <div class="font-bold text-slate-700 text-sm">${p.name}</div>
+                    </div>
+                    <button onclick="removeFromActive(${p.id})" class="p-2 text-red-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
                 </div>
-                <button onclick="removeFromActive(${p.id})" class="p-2 text-red-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                </button>
-            </div>
-        `).join('') : '<div class="text-center py-10 text-slate-400 text-xs uppercase tracking-widest">ยังไม่มีผู้เข้าร่วม</div>';
+            `).join('')
+            : '<div class="text-center py-10 text-slate-400 text-xs uppercase tracking-widest">ยังไม่มีผู้เข้าร่วม</div>';
     }
 
     function processGenerateAll(useQueue = false) {
-        const mode = parseInt(document.getElementById('game-mode').value);
+        const mode        = parseInt(document.getElementById('game-mode').value);
         const levelFilter = document.getElementById('level-filter').value;
-        const matchType = document.getElementById('match-type').value;
+        const matchType   = document.getElementById('match-type').value;
 
         let pool = [...activePlayers];
-        
-        // กรองตามระดับและประเภท
         if (levelFilter !== 'balanced') pool = pool.filter(p => p.level === parseInt(levelFilter));
-        if (matchType === 'men') pool = pool.filter(p => p.gender === 'M');
+        if (matchType === 'men')        pool = pool.filter(p => p.gender === 'M');
         else if (matchType === 'women') pool = pool.filter(p => p.gender === 'F');
 
         if (pool.length < mode) return showAlert(`ผู้เล่นไม่พอ (มี ${pool.length} จาก ${mode})`);
 
         let sortedPool = [];
         if (useQueue && lastWaitingList.length > 0) {
-            // นำคนที่รอคราวที่แล้วมาต่อแถวหน้าสุด
-            const waitingIds = lastWaitingList.map(p => p.id);
-            const prioritised = pool.filter(p => waitingIds.includes(p.id)).sort(() => 0.5 - Math.random());
-            const others = pool.filter(p => !waitingIds.includes(p.id)).sort(() => 0.5 - Math.random());
+            const waitingIds   = lastWaitingList.map(p => p.id);
+            const prioritised  = pool.filter(p =>  waitingIds.includes(p.id)).sort(() => 0.5 - Math.random());
+            const others       = pool.filter(p => !waitingIds.includes(p.id)).sort(() => 0.5 - Math.random());
             sortedPool = [...prioritised, ...others];
         } else {
             sortedPool = pool.sort(() => 0.5 - Math.random());
@@ -380,19 +378,15 @@
             } else {
                 selected = tempPool.splice(0, mode);
             }
-
             if (selected.length === mode) {
-                const res = splitToTeams(selected, mode, matchType, levelFilter === 'balanced');
-                courts.push(res);
+                courts.push(splitToTeams(selected, mode, matchType, levelFilter === 'balanced'));
             }
         }
-        
-        lastWaitingList = [...tempPool]; // เก็บรายชื่อที่เหลือไว้ใช้รอบหน้า
+
+        lastWaitingList = [...tempPool];
         renderResults(courts, tempPool);
         switchPage('result');
-        
-        // แสดงปุ่ม "สุ่มจากผู้เล่นที่เหลือ" เฉพาะเมื่อมีคนรอจริง
-        document.getElementById('btn-rotate').style.opacity = tempPool.length > 0 || useQueue ? "1" : "0.5";
+        document.getElementById('btn-rotate').style.opacity = tempPool.length > 0 ? "1" : "0.5";
     }
 
     function splitToTeams(pool, mode, matchType, isBalanced) {
@@ -408,7 +402,7 @@
             const historyMatch = isHistory(s.a[0], s.a[1]) || isHistory(s.b[0], s.b[1]);
             s.score = (historyMatch ? 50 : 0) + (isBalanced ? diff : Math.random());
         });
-        combs.sort((x,y) => x.score - y.score);
+        combs.sort((x, y) => x.score - y.score);
         const win = combs[0];
         record(win.a); record(win.b);
         return { teamA: win.a, teamB: win.b };
@@ -416,10 +410,10 @@
 
     function isHistory(p1, p2) { return historyPairs.includes([p1.id, p2.id].sort().join(':')); }
     function record(t) {
-        if(t.length < 2) return;
-        const key = t.map(x=>x.id).sort().join(':');
-        if(!historyPairs.includes(key)) historyPairs.push(key);
-        if(historyPairs.length > 100) historyPairs.shift();
+        if (t.length < 2) return;
+        const key = t.map(x => x.id).sort().join(':');
+        if (!historyPairs.includes(key)) historyPairs.push(key);
+        if (historyPairs.length > 100) historyPairs.shift();
     }
 
     function renderResults(courts, waiting) {
@@ -427,16 +421,30 @@
         document.getElementById('match-count-badge').innerText = `${courts.length} สนาม`;
         container.innerHTML = courts.map((c, i) => `
             <div class="glass-card p-4 relative overflow-hidden">
-                <div class="absolute -top-2 -right-1 text-4xl font-black text-slate-100">${i+1}</div>
+                <div class="absolute -top-2 -right-1 text-4xl font-black text-slate-100">${i + 1}</div>
                 <div class="space-y-3 relative z-10">
                     <div class="bg-blue-50/50 rounded-xl p-3 border border-blue-100">
-                        <div class="flex justify-between items-center mb-1"><span class="text-[8px] font-black text-blue-400">TEAM A</span></div>
-                        <div class="space-y-1">${c.teamA.map(p => `<div class="flex justify-between"><span class="font-bold text-slate-700 text-sm">${p.name}</span><span class="text-[8px] text-slate-400 uppercase">${levels[p.level]}</span></div>`).join('')}</div>
+                        <span class="text-[8px] font-black text-blue-400">TEAM A</span>
+                        <div class="space-y-1 mt-1">${c.teamA.map(p => `
+                            <div class="flex justify-between">
+                                <span class="font-bold text-slate-700 text-sm">${p.name}</span>
+                                <span class="text-[8px] text-slate-400 uppercase">${levels[p.level]}</span>
+                            </div>`).join('')}
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 px-10"><div class="h-px bg-slate-100 flex-1"></div><span class="text-[8px] font-black text-slate-300">VS</span><div class="h-px bg-slate-100 flex-1"></div></div>
+                    <div class="flex items-center gap-2 px-10">
+                        <div class="h-px bg-slate-100 flex-1"></div>
+                        <span class="text-[8px] font-black text-slate-300">VS</span>
+                        <div class="h-px bg-slate-100 flex-1"></div>
+                    </div>
                     <div class="bg-emerald-50/50 rounded-xl p-3 border border-emerald-100">
-                        <div class="flex justify-between items-center mb-1"><span class="text-[8px] font-black text-emerald-400">TEAM B</span></div>
-                        <div class="space-y-1">${c.teamB.map(p => `<div class="flex justify-between"><span class="font-bold text-slate-700 text-sm">${p.name}</span><span class="text-[8px] text-slate-400 uppercase">${levels[p.level]}</span></div>`).join('')}</div>
+                        <span class="text-[8px] font-black text-emerald-400">TEAM B</span>
+                        <div class="space-y-1 mt-1">${c.teamB.map(p => `
+                            <div class="flex justify-between">
+                                <span class="font-bold text-slate-700 text-sm">${p.name}</span>
+                                <span class="text-[8px] text-slate-400 uppercase">${levels[p.level]}</span>
+                            </div>`).join('')}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -448,15 +456,23 @@
             document.getElementById('waiting-list').innerHTML = waiting.map(p => `
                 <div class="bg-white px-3 py-1.5 rounded-lg shadow-sm text-[11px] font-bold text-slate-600 border border-slate-200">${p.name}</div>
             `).join('');
-        } else wBox.classList.add('hidden');
+        } else {
+            wBox.classList.add('hidden');
+        }
     }
 
     function showAlert(m) {
         document.getElementById('alert-msg').innerText = m;
-        document.getElementById('alert-modal').classList.remove('hidden');
+        document.getElementById('alert-modal').style.display = 'flex';
     }
-    function closeAlert() { document.getElementById('alert-modal').classList.add('hidden'); }
-    function clearHistory() { historyPairs = []; save(); showAlert("ล้างประวัติแล้ว"); }
+    function closeAlert() {
+        document.getElementById('alert-modal').style.display = 'none';
+    }
+    function clearHistory() {
+        historyPairs = [];
+        save();
+        showAlert("ล้างประวัติแล้ว");
+    }
 
     renderLists();
 </script>
